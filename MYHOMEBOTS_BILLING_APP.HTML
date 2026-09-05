@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MYHOMEBOTS — Estimate Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --bg:#080b12;--bg2:#0f1420;--card:rgba(255,255,255,.035);--cardSolid:#141a28;
+            --green:#10b981;--greenDark:#059669;--greenLight:#34d399;
+            --gold:#D4AF37;--goldDark:#B8860B;--goldLight:#E9CD6B;
+            --orange:#f59e0b;--red:#ef4444;--purple:#8b5cf6;--cyan:#06b6d4;--baby:#A4B1BA;
+            --t1:#f5f7fa;--t2:#9aa7bd;--t3:#68748a;
+            --brd:rgba(255,255,255,.08);--brd2:rgba(255,255,255,.16);
+            --shadow:0 8px 30px rgba(0,0,0,.45);--shadowSm:0 2px 10px rgba(0,0,0,.3);
+            --glowGreen:0 4px 22px rgba(16,185,129,.28);--glowGold:0 4px 22px rgba(212,175,55,.22);
+            --radius:16px;--radiusSm:9px;
+        }
+        html{scroll-behavior:smooth}
+        body{
+            font-family:'Inter',sans-serif;color:var(--t1);min-height:100vh;font-size:11px;
+            background:
+                radial-gradient(circle at 12% -8%, rgba(16,185,129,.14), transparent 42%),
+                radial-gradient(circle at 92% 4%, rgba(212,175,55,.10), transparent 38%),
+                radial-gradient(circle at 50% 100%, rgba(6,182,212,.06), transparent 45%),
+                var(--bg);
+            background-attachment:fixed;
+        }
+        ::selection{background:rgba(16,185,129,.35);color:#fff}
+        ::-webkit-scrollbar{width:9px;height:9px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:10px}
+        ::-webkit-scrollbar-thumb:hover{background:rgba(212,175,55,.35)}
+
+        .header{padding:14px 28px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--brd);background:rgba(6,9,16,.72);position:sticky;top:0;z-index:100;backdrop-filter:blur(24px) saturate(140%);position:relative}
+        .header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.55) 25%,rgba(16,185,129,.55) 55%,transparent 85%)}
+        .logo{display:flex;align-items:center;gap:11px}
+        .logo-icon{width:38px;height:38px;background:linear-gradient(145deg,var(--greenDark),var(--green) 60%,var(--greenLight));border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#fff;box-shadow:0 0 0 1px rgba(212,175,55,.35),var(--glowGreen);position:relative}
+        .logo-text{font-family:'Playfair Display',Georgia,serif;font-size:19px;font-weight:800;letter-spacing:1.5px;background:linear-gradient(90deg,var(--goldLight),var(--green) 75%);-webkit-background-clip:text;background-clip:text;color:transparent}
+        .logo-sub{font-size:8.5px;color:var(--t3);letter-spacing:2.5px;text-transform:uppercase;margin-top:1px}
+        .main{max-width:1080px;margin:0 auto;padding:22px 28px 60px}
+
+        .tabs{display:flex;gap:4px;margin-bottom:20px;background:rgba(255,255,255,.02);border:1px solid var(--brd);border-radius:12px;padding:4px;width:fit-content}
+        .tab{padding:9px 20px;border:none;background:transparent;color:var(--t3);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;border-radius:9px;transition:.25s;display:flex;align-items:center;gap:6px;letter-spacing:.2px}
+        .tab:hover{color:var(--t1);background:rgba(255,255,255,.05)}
+        .tab.active{background:linear-gradient(135deg,var(--greenDark),var(--green));color:#fff;box-shadow:var(--glowGreen)}
+        .tab-badge{background:rgba(255,255,255,.28);padding:1px 7px;border-radius:8px;font-size:9px;font-weight:700}
+        .tab-content{display:none;animation:fade .35s ease}.tab-content.active{display:block}
+        @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+        .section{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012)),var(--cardSolid);border:1px solid var(--brd);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadowSm);position:relative;overflow:hidden;transition:.3s}
+        .section::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--green) 60%,transparent)}
+        .section:hover{border-color:var(--brd2);box-shadow:var(--shadow);transform:translateY(-1px)}
+        .sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+        .sec-title{font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:7px;color:var(--greenLight);letter-spacing:.3px}
+        .fg{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+        .fg4{grid-template-columns:repeat(4,1fr)}
+        .fi{display:flex;flex-direction:column;gap:4px}.fi.c2{grid-column:span 2}.fi.c3{grid-column:span 3}
+        .fl{font-size:9px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.5px}.fl .req{color:var(--red)}
+        .fin,.fsel,.fta{padding:8px 11px;background:rgba(255,255,255,.03);border:1px solid var(--brd);border-radius:8px;color:var(--t1);font-family:inherit;font-size:11px;outline:0;transition:.2s}
+        .fin:hover,.fsel:hover,.fta:hover{border-color:var(--brd2)}
+        .fin:focus,.fsel:focus,.fta:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(16,185,129,.16);background:rgba(16,185,129,.03)}
+        .fsel{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M8 12L2 6h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+        .fsel option{background:#141a28;color:#f5f7fa}.fta{resize:vertical;min-height:44px}
+        .fhint{font-size:8px;color:var(--t3)}
+
+        .btn{padding:8px 16px;border:none;border-radius:9px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:.25s;letter-spacing:.2px}
+        .btn-primary{background:linear-gradient(135deg,var(--greenDark),var(--green));color:#fff;box-shadow:0 3px 12px rgba(16,185,129,.35)}
+        .btn-primary:hover{transform:translateY(-1.5px);box-shadow:0 6px 18px rgba(16,185,129,.45)}
+        .btn-green{background:linear-gradient(135deg,#059669,#06b6d4);color:#fff;box-shadow:0 3px 12px rgba(6,182,212,.3)}
+        .btn-green:hover{transform:translateY(-1.5px);box-shadow:0 6px 18px rgba(6,182,212,.4)}
+        .btn-outline{background:rgba(255,255,255,.02);border:1px solid var(--brd2);color:var(--t2)}
+        .btn-outline:hover{border-color:var(--gold);color:var(--goldLight);background:rgba(212,175,55,.06)}
+        .btn-danger{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.18)}
+        .btn-danger:hover{background:rgba(239,68,68,.2)}
+        .btn-sm{padding:5px 10px;font-size:10px;border-radius:6px}
+        .mode-toggle{display:flex;gap:2px;background:rgba(255,255,255,.02);border-radius:8px;padding:3px;border:1px solid var(--brd)}
+        .mode-btn{padding:6px 13px;border:none;border-radius:6px;font-family:inherit;font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:var(--t3);transition:.2s}
+        .mode-btn.active{background:linear-gradient(135deg,var(--greenDark),var(--green));color:#fff;box-shadow:0 2px 8px rgba(16,185,129,.3)}
+
+        .prod-card{background:rgba(255,255,255,.025);border:1px solid var(--brd);border-radius:12px;padding:16px;margin-bottom:11px;border-left:3px solid var(--green);transition:.25s}
+        .prod-card:hover{border-color:var(--brd2);border-left-color:var(--gold);box-shadow:var(--shadowSm);transform:translateY(-1px)}
+        .prod-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+        .prod-num{font-size:11px;font-weight:700;color:var(--greenLight);display:flex;align-items:center;gap:5px}
+        .prod-badge{background:linear-gradient(135deg,var(--greenDark),var(--green));color:#fff;font-size:9px;padding:3px 8px;border-radius:7px;font-weight:700;box-shadow:0 2px 6px rgba(16,185,129,.3)}
+        .prod-remove{width:25px;height:25px;border:none;border-radius:7px;background:rgba(239,68,68,.1);color:var(--red);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+        .prod-remove:hover{background:rgba(239,68,68,.22)}
+        .photos-area{margin-top:9px}.photos-grid{display:flex;gap:6px;margin-top:6px}
+        .photo-slot{width:64px;height:64px;border:2px dashed var(--brd2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:.2s}
+        .photo-slot:hover{border-color:var(--gold);background:rgba(212,175,55,.04)}.photo-slot img{width:100%;height:100%;object-fit:cover}
+        .photo-slot .ph-ph{font-size:18px;opacity:.3}.photo-slot input{display:none}
+        .photo-remove{position:absolute;top:1px;right:1px;width:14px;height:14px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0}
+        .photo-slot:hover .photo-remove{opacity:1}
+
+        .pricing-section{margin-top:9px;padding-top:9px;border-top:1px solid var(--brd)}
+        .pricing-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:7px}
+        .pricing-row.nsp-row{grid-template-columns:repeat(5,1fr)}
+        .price-calc{background:linear-gradient(135deg,rgba(16,185,129,.06),rgba(212,175,55,.03));border:1px solid rgba(16,185,129,.14);border-radius:9px;padding:8px;margin-top:7px}
+        .price-calc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+        .pcv-label{font-size:7px;color:var(--t3);text-transform:uppercase;letter-spacing:.3px}.pcv{font-size:11px;font-weight:700}
+        .pcv.org{color:var(--orange)}.pcv.grn{color:var(--greenLight)}.pcv.blu{color:var(--baby)}.pcv.red{color:var(--red)}.pcv.pur{color:var(--purple)}
+        .internal-section{background:rgba(239,68,68,.035);border:1px dashed rgba(239,68,68,.16);border-radius:9px;padding:9px;margin-top:7px}
+        .internal-label{font-size:8px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.9px;margin-bottom:6px}
+        .internal-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+        .int-item label{font-size:7px;color:var(--t3)}.int-val{font-size:10px;font-weight:700}
+        .int-val.cost{color:var(--orange)}.int-val.profit{color:var(--greenLight)}.int-val.neg{color:var(--red)}.int-val.sell{color:var(--baby)}
+
+        .grand-total{background:linear-gradient(135deg,rgba(16,185,129,.07),rgba(212,175,55,.05));border:1px solid rgba(212,175,55,.28);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;box-shadow:var(--glowGold);position:relative;overflow:hidden}
+        .grand-total::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--green),var(--gold))}
+        .gt-title{font-size:11px;font-weight:700;color:var(--goldLight);text-transform:uppercase;letter-spacing:1.3px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+        .gt-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+        .gt-item label{font-size:8px;color:var(--t3);display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px}
+        .gt-item .gtv{font-size:16px;font-weight:800}
+        .gtv.org{color:var(--orange)}.gtv.grn{color:var(--greenLight)}.gtv.blu{color:var(--baby)}.gtv.red{color:var(--red)}.gtv.pur{color:var(--purple)}.gtv.wht{color:var(--t1)}
+
+        .actions-bar{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:16px}
+        .est-list{display:flex;flex-direction:column;gap:9px}
+        .est-item{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012)),var(--cardSolid);border:1px solid var(--brd);border-radius:12px;padding:13px 17px;display:flex;justify-content:space-between;align-items:center;transition:.25s;box-shadow:var(--shadowSm)}
+        .est-item:hover{border-color:var(--brd2);transform:translateY(-1px);box-shadow:var(--shadow)}
+        .est-info h4{font-size:12px;font-weight:600;margin-bottom:2px;color:var(--t1)}
+        .est-meta{font-size:9px;color:var(--t3);display:flex;gap:10px;flex-wrap:wrap}
+        .est-amount{font-size:15px;font-weight:800;color:var(--greenLight)}
+        .est-actions{display:flex;gap:3px}
+        .empty{text-align:center;padding:34px}.empty-icon{font-size:34px;margin-bottom:8px;opacity:.35}
+        .empty h3{font-size:12px;color:var(--t2)}.empty p{font-size:10px;color:var(--t3)}
+
+        .cloud-status{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--t2);flex-wrap:wrap}
+        .cloud-dot{width:8px;height:8px;border-radius:50%;background:var(--t3);flex-shrink:0}
+        .cloud-dot.on{background:var(--greenLight);box-shadow:0 0 6px var(--greenLight)}
+        .cloud-help{font-size:9px;color:var(--t3);line-height:1.6;margin-top:8px;padding:9px 11px;background:rgba(255,255,255,.02);border:1px dashed var(--brd2);border-radius:8px}
+        .cloud-help a{color:var(--goldLight)}
+
+        /* Logo & Signature upload */
+        .img-upload-box{width:120px;height:80px;border:2px dashed var(--brd2);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:.2s;background:rgba(255,255,255,.02)}
+        .img-upload-box:hover{border-color:var(--gold);background:rgba(212,175,55,.04)}
+        .img-upload-box img{width:100%;height:100%;object-fit:contain}
+        .img-upload-box .placeholder{font-size:9px;color:var(--t3);text-align:center;line-height:1.4}
+        .img-upload-box input{display:none}
+        .img-upload-box .img-remove{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0}
+        .img-upload-box:hover .img-remove{opacity:1}
+        .sig-upload-box{width:160px;height:70px;border:2px dashed var(--brd2);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:.2s;background:rgba(255,255,255,.02)}
+        .sig-upload-box:hover{border-color:var(--gold);background:rgba(212,175,55,.04)}
+        .sig-upload-box img{width:100%;height:100%;object-fit:contain}
+        .sig-upload-box .placeholder{font-size:9px;color:var(--t3);text-align:center;line-height:1.4}
+        .sig-upload-box input{display:none}
+        .sig-upload-box .img-remove{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0}
+        .sig-upload-box:hover .img-remove{opacity:1}
+
+        /* ===================== PREVIEW / PRINT ===================== */
+        .preview-frame{background:#fff;color:#222;border-radius:8px;overflow:hidden;max-width:820px;margin:0 auto;font-size:11px;line-height:1.5}
+
+        .pv-hdr{background:#1B4332;padding:22px 28px 18px;text-align:center;position:relative;border-bottom:3px solid #40916C}
+        .pv-hdr::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#D4AF37,#B8860B,#D4AF37)}
+        .pv-hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#D4AF37 30%,#D4AF37 70%,transparent)}
+        .pv-logo{margin-bottom:10px}.pv-logo img{max-height:60px;max-width:200px;object-fit:contain}
+        .pv-co-name{font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:900;color:#FFFFFF;letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+        .pv-co-addr{font-size:11px;color:#E8F5E9;font-weight:600;line-height:1.6;margin-bottom:8px;letter-spacing:.3px}
+        .pv-co-row{display:flex;justify-content:center;gap:32px;flex-wrap:wrap;margin-bottom:6px}
+        .pv-co-item{display:flex;align-items:center;gap:6px;font-size:11px;color:#E8F5E9;font-weight:600;letter-spacing:.3px}
+        .pv-co-item svg{width:14px;height:14px;fill:#A5D6A7;flex-shrink:0}
+        .pv-co-gst{font-size:11px;color:#C8E6C9;font-weight:700;letter-spacing:1.5px;margin-top:2px}
+        .pv-gold-bar{width:60px;height:2px;background:linear-gradient(90deg,transparent,#D4AF37,transparent);margin:8px auto 0}
+
+        .pv-body{padding:20px 28px}
+
+        .pv-est-row{display:flex;gap:20px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-start}
+        .pv-em{flex:0 0 auto}.pv-em-label{font-size:8px;font-weight:700;text-transform:uppercase;color:#40916C;letter-spacing:.5px}
+        .pv-em-val{font-size:12px;font-weight:700;color:#1B4332;margin-top:1px}
+        .pv-est-title{font-family:'Playfair Display',Georgia,serif;font-size:20px;font-weight:800;color:#1B4332;letter-spacing:2px;flex:1;text-align:right}
+
+        .pv-to{margin-bottom:16px;border:1px solid #C8E6C9;border-radius:6px;padding:12px 16px;background:#F0FFF4}
+        .pv-to-label{font-size:9px;font-weight:700;text-transform:uppercase;color:#2D6A4F;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:4px}
+        .pv-to-label svg{width:12px;height:12px;fill:#2D6A4F}
+        .pv-to-name{font-size:14px;font-weight:800;color:#1B4332;margin-bottom:2px}
+        .pv-to-comp{font-size:12px;font-weight:700;color:#2D6A4F;margin-bottom:6px}
+        .pv-to-line{font-size:11px;color:#333;line-height:1.6;display:flex;align-items:flex-start;gap:6px;margin-bottom:3px}
+        .pv-to-line svg{width:12px;height:12px;fill:#40916C;flex-shrink:0;margin-top:2px}
+
+        .pv-tbl{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:11px}
+        .pv-tbl th{background:#E8F5E9;padding:8px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;color:#1B4332;letter-spacing:.4px;border-bottom:2px solid #81C784}
+        .pv-tbl td{padding:8px;border-bottom:1px solid #E8F5E9;vertical-align:top;font-size:11px}
+        .pv-tbl tbody tr:hover{background:#FAFFF5}
+        .pv-pname{font-size:12px;font-weight:700;color:#1B4332;margin-bottom:2px}
+        .pv-specs{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+        .pv-tag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;background:#EEEEEE;color:#333;border:1px solid #BDBDBD}
+        .pv-room{font-size:9px;font-weight:700;color:#40916C;margin-top:2px;letter-spacing:.3px}
+        .pv-room-hdr td{background:#1B4332!important;color:#fff!important;font-weight:800;font-size:10px;text-transform:uppercase;letter-spacing:.6px;padding:6px 10px!important}
+        .pv-room-sub td{background:#F0FFF4!important;color:#2D6A4F!important;font-weight:700;font-size:10px;text-align:right;padding:5px 10px!important;border-bottom:2px solid #C8E6C9!important}
+        .pv-photos-row{display:flex;gap:5px;margin-top:5px}
+        .pv-photos-row img{width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid #ddd;cursor:pointer;transition:transform .2s}
+        .pv-photos-row img:hover{transform:scale(1.05)}
+
+        .pv-totals{display:flex;justify-content:flex-end;margin-bottom:16px}
+        .pv-totals-box{width:260px;background:#F0FFF4;border:1px solid #C8E6C9;border-radius:7px;padding:12px}
+        .pv-tot-row{display:flex;justify-content:space-between;padding:4px 0;font-size:11px;color:#444}
+        .pv-tot-row.grand{border-top:2px solid #1B4332;padding-top:8px;margin-top:5px;font-size:14px;font-weight:800;color:#1B4332}
+        .pv-tot-row .disc{color:#ef4444}
+        .pv-tot-row.roff{font-size:10px;color:#888}
+
+        .pv-boxes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+        .pv-box{border:1px solid #C8E6C9;border-radius:6px;padding:12px;background:#F0FFF4}
+        .pv-box h5{font-size:9px;font-weight:700;text-transform:uppercase;color:#1B4332;letter-spacing:.4px;margin-bottom:6px;display:flex;align-items:center;gap:4px}
+        .pv-box h5 svg{width:12px;height:12px;fill:#40916C}
+        .pv-box p,.pv-box ol{font-size:11px;color:#444;line-height:1.6}.pv-box ol{padding-left:16px}
+
+        /* Photo Gallery in Preview */
+        .pv-gallery{margin-top:20px;padding-top:16px;border-top:2px solid #E8F5E9}
+        .pv-gallery-title{font-size:12px;font-weight:800;color:#1B4332;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+        .pv-gallery-title svg{width:16px;height:16px;fill:#40916C}
+        .pv-gallery-product{margin-bottom:18px;page-break-inside:avoid}
+        .pv-gallery-product-name{font-size:12px;font-weight:700;color:#2D6A4F;margin-bottom:8px;padding:6px 10px;background:#F0FFF4;border-left:3px solid #40916C;border-radius:0 4px 4px 0}
+        .pv-gallery-imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+        .pv-gallery-img-wrap{border:1px solid #E0E0E0;border-radius:6px;overflow:hidden;background:#fafafa;cursor:pointer;transition:box-shadow .2s}
+        .pv-gallery-img-wrap:hover{box-shadow:0 4px 16px rgba(0,0,0,.12)}
+        .pv-gallery-img-wrap img{width:100%;height:auto;display:block;max-height:240px;object-fit:contain;padding:6px}
+        .pv-gallery-img-label{font-size:9px;color:#666;text-align:center;padding:4px 6px;background:#f5f5f5;border-top:1px solid #eee}
+
+        .pv-stamp{display:flex;justify-content:flex-end;margin-top:24px;padding-top:14px;border-top:1px dashed #81C784}
+        .pv-stamp-box{text-align:center}
+        .pv-stamp-sig{margin-bottom:6px}.pv-stamp-sig img{max-height:50px;max-width:140px;object-fit:contain}
+        .pv-stamp-line{width:160px;border-top:1px solid #333;padding-top:4px;font-size:10px;color:#444;text-align:center;font-weight:600}
+        .pv-footer{background:#E8F5E9;padding:10px 28px;text-align:center;font-size:9px;color:#6B8E7B;border-top:1px solid #C8E6C9}
+
+        .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;align-items:center;justify-content:center;cursor:pointer;padding:20px;flex-direction:column}
+        .lightbox.show{display:flex}
+        .lightbox img{max-width:90vw;max-height:85vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6)}
+        .lightbox-close{position:absolute;top:20px;right:24px;font-size:32px;color:#fff;cursor:pointer;font-weight:300;z-index:10000}
+        .lightbox-nav{display:flex;gap:12px;margin-top:14px}
+        .lightbox-nav button{padding:8px 18px;border:1px solid rgba(255,255,255,.3);border-radius:6px;background:rgba(255,255,255,.1);color:#fff;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;transition:.2s}
+        .lightbox-nav button:hover{background:rgba(255,255,255,.25)}
+        .lightbox-counter{color:rgba(255,255,255,.6);font-size:11px;margin-top:6px}
+
+        .toast{position:fixed;bottom:20px;right:20px;background:var(--card);border-left:4px solid var(--green);border-radius:8px;padding:9px 16px;color:var(--t1);font-size:11px;font-weight:500;box-shadow:0 6px 24px rgba(0,0,0,.4);z-index:2000;animation:tIn .3s ease,tOut .3s ease 2.5s forwards}
+        @keyframes tIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes tOut{from{opacity:1}to{opacity:0;transform:translateX(30px)}}
+
+        @media(max-width:800px){.fg,.fg4{grid-template-columns:1fr 1fr}.fi.c3{grid-column:span 2}.pricing-row,.pricing-row.nsp-row{grid-template-columns:1fr 1fr 1fr}.gt-grid{grid-template-columns:repeat(3,1fr)}.pv-boxes{grid-template-columns:1fr}.pv-to-line{font-size:10px}.pv-gallery-imgs{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
+        @media(max-width:500px){.fg,.fg4{grid-template-columns:1fr}.fi.c2,.fi.c3{grid-column:span 1}.pricing-row,.pricing-row.nsp-row{grid-template-columns:1fr 1fr}.gt-grid{grid-template-columns:1fr 1fr}.main{padding:10px}.pv-gallery-imgs{grid-template-columns:1fr 1fr}}
+        @media print{
+            body{background:#fff!important;color:#000!important}
+            .header,.tabs,.actions-bar,.section,.grand-total,.btn,.tab-content:not(#pvTC),.internal-section,.lightbox{display:none!important}
+            #pvTC{display:block!important}
+            .preview-frame{box-shadow:none!important;max-width:100%!important;border-radius:0!important}
+            .pv-hdr,.pv-hdr::before,.pv-hdr::after,.pv-tbl th,.pv-to,.pv-box,.pv-totals-box,.pv-footer,.pv-tag,.pv-gallery-product-name,.pv-gallery-img-label{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+            .pv-body{padding:14px 20px}
+            .pv-photos-row img{cursor:default}
+            .pv-gallery-product{page-break-inside:avoid}
+            .pv-gallery{page-break-before:auto}
+            @page{margin:6mm;size:A4}
+        }
+    </style>
+</head>
+<body>
+<header class="header"><div class="logo"><div class="logo-icon">M</div><div><div class="logo-text">MYHOMEBOTS</div><div class="logo-sub">Estimate Generator</div></div></div></header>
+<div class="main">
+    <div class="tabs">
+        <button class="tab active" onclick="swTab('create')">📝 Create</button>
+        <button class="tab" onclick="swTab('saved')">📂 Saved <span class="tab-badge" id="eC">0</span></button>
+        <button class="tab" onclick="swTab('preview')">👁️ Preview</button>
+    </div>
+    <div class="tab-content active" id="crTab">
+        <div class="section"><div class="sec-hdr"><div class="sec-title">☁️ Cloud Sync — Google Sheets</div><div class="cloud-status"><span class="cloud-dot" id="cloudDot"></span><span id="gSyncStatus">Not connected</span></div></div>
+            <div class="fg">
+                <div class="fi c2"><label class="fl">Google OAuth Client ID</label><input class="fin" id="gClientId" placeholder="xxxxxxxxxx.apps.googleusercontent.com"></div>
+                <div class="fi"><label class="fl">&nbsp;</label><button class="btn btn-primary" onclick="connectGoogle()" style="width:100%;justify-content:center">🔗 Connect Google</button></div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap">
+                <button class="btn btn-sm btn-green" onclick="syncNow()">🔄 Sync Now</button>
+                <span id="gSheetLink" style="font-size:10px"></span>
+            </div>
+            <div class="cloud-help">Estimates auto-save/update to a private Google Sheet in your Drive once connected, so they follow you across devices — plus you get a spreadsheet view of every estimate. Note: product photos, your logo, and signature image stay on the device you created them on and are not included in the cloud copy (Google Sheets has a 50,000-character-per-cell limit, and embedded images are too large to fit) — all pricing, specs, customer, and terms data syncs fully. One-time setup: create a free OAuth Client ID at <a href="https://console.cloud.google.com/apis/credentials" target="_blank">console.cloud.google.com/apis/credentials</a> (Web application type), enable the Google Sheets API, and add this page's URL under "Authorized JavaScript origins". Paste the Client ID above, then Connect. Note: this requires the app to be opened from a real web address (http/https) — Google sign-in does not work when opening the file directly (file://).</div></div>
+        <div class="section"><div class="sec-hdr"><div class="sec-title">🏢 Company</div><button class="btn btn-sm btn-outline" onclick="saveCo()">💾 Default</button></div>
+            <div class="fg">
+                <div class="fi"><label class="fl">🖼️ Company Logo</label>
+                    <div class="img-upload-box" id="logoBox" onclick="document.getElementById('logoInput').click()">
+                        <div class="placeholder">+ Upload Logo</div>
+                        <input type="file" id="logoInput" accept="image/*" onchange="handleLogoUpload(this)">
+                    </div>
+                </div>
+                <div class="fi c2"><label class="fl">Company <span class="req">*</span></label><input class="fin" id="cN" placeholder="Your Company Pvt. Ltd."></div>
+                <div class="fi"><label class="fl">GSTIN</label><input class="fin" id="cG" placeholder="22AAAAA0000A1Z5"></div>
+                <div class="fi c2"><label class="fl">Address</label><textarea class="fta" id="cA" placeholder="Address..." style="min-height:36px"></textarea></div>
+                <div class="fi"><label class="fl">📞 Phone</label><input class="fin" id="cP" placeholder="+91 98765 43210"></div><div class="fi"><label class="fl">✉️ Email</label><input class="fin" id="cE" placeholder="info@company.com"></div></div></div>
+        <div class="section"><div class="sec-hdr"><div class="sec-title">👤 Customer</div></div>
+            <div class="fg"><div class="fi"><label class="fl">Name</label><input class="fin" id="uN" placeholder="Name"></div><div class="fi"><label class="fl">Company</label><input class="fin" id="uC" placeholder="Company"></div><div class="fi"><label class="fl">GSTIN</label><input class="fin" id="uG" placeholder="GSTIN"></div>
+                <div class="fi c3"><label class="fl">Address</label><textarea class="fta" id="uA" placeholder="Address..." style="min-height:36px"></textarea></div>
+                <div class="fi"><label class="fl">📞 Phone</label><input class="fin" id="uP" placeholder="Phone"></div><div class="fi"><label class="fl">✉️ Email</label><input class="fin" id="uE" placeholder="Email"></div></div></div>
+        <div class="section"><div class="sec-hdr"><div class="sec-title">📋 Estimate Info</div></div>
+            <div class="fg4"><div class="fi"><label class="fl">No.</label><input class="fin" id="eNo"></div><div class="fi"><label class="fl">Date</label><input type="date" class="fin" id="eDt"></div><div class="fi"><label class="fl">Valid</label><input type="date" class="fin" id="eVl"></div><div class="fi"><label class="fl">Currency</label><select class="fsel" id="eCr"><option value="₹">₹ INR</option><option value="$">$ USD</option></select></div></div>
+            <div class="fg4" style="margin-top:8px"><div class="fi c2"><label class="fl">🏗️ Project / Site Name</label><input class="fin" id="eSite" placeholder="e.g. Sharma Residence, Ballygunge"></div><div class="fi"><label class="fl">🔁 Revision No.</label><input class="fin" id="eRev" placeholder="Rev 0"></div><div class="fi"><label class="fl">📊 Status</label><select class="fsel" id="eStatus"><option>Draft</option><option>Sent</option><option>Approved</option><option>Rejected</option><option>Expired</option></select></div></div>
+            <div class="fg" style="margin-top:8px"><div class="fi c3"><label class="fl">Revision Notes</label><textarea class="fta" id="eRevNote" placeholder="What changed in this revision..." style="min-height:36px"></textarea></div></div></div>
+        <div class="section"><div class="sec-hdr"><div class="sec-title">📦 Products</div><div style="display:flex;gap:6px;align-items:center"><div class="mode-toggle"><button class="mode-btn active" id="mD" onclick="setM('disc')">Discount %</button><button class="mode-btn" id="mN" onclick="setM('nsp')">NSP + Markup</button></div><button class="btn btn-sm btn-primary" onclick="addP()">+ Add</button></div></div>
+            <datalist id="dlBeam"><option value="15°"><option value="24°"><option value="36°"><option value="45°"><option value="60°"><option value="90°"><option value="120°"><option value="Wide Flood"><option value="Asymmetric"></datalist>
+            <datalist id="dlLumens"><option value="200"><option value="400"><option value="600"><option value="800"><option value="1000"><option value="1200"><option value="1600"><option value="2000"><option value="3200"><option value="4000"><option value="6000"></datalist>
+            <datalist id="dlCutout"><option value="Ø 50mm"><option value="Ø 65mm"><option value="Ø 75mm"><option value="Ø 100mm"><option value="Ø 125mm"><option value="Ø 150mm"><option value="75x75mm"><option value="100x100mm"><option value="150x150mm"><option value="200x200mm"><option value="300x300mm"><option value="600x600mm"><option value="1200x300mm"><option value="Surface (No Cutout)"></datalist>
+            <datalist id="dlBrand"><option value="Trix"><option value="Focus Lighting & Fixtures"><option value="Philips"><option value="Havells"><option value="Wipro"><option value="Syska"></datalist>
+            <div id="pCt"></div>
+            <button style="width:100%;padding:10px;border:2px dashed var(--brd2);border-radius:8px;background:transparent;color:var(--t3);font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;margin-top:4px;transition:.3s" onclick="addP()" onmouseover="this.style.borderColor='var(--green)';this.style.color='var(--green)'" onmouseout="this.style.borderColor='var(--brd2)';this.style.color='var(--t3)'">+ Add Product</button></div>
+        <div class="grand-total"><div class="gt-title">💰 Grand Total</div><div class="gt-grid">
+            <div class="gt-item"><label>MRP Total</label><div class="gtv pur" id="gM">₹0</div></div>
+            <div class="gt-item"><label>Disc</label><div class="gtv red" id="gD">-₹0</div></div>
+            <div class="gt-item"><label>Subtotal</label><div class="gtv blu" id="gS">₹0</div></div>
+            <div class="gt-item"><label>GST</label><div class="gtv org" id="gG">₹0</div></div>
+            <div class="gt-item"><label>Round</label><div class="gtv wht" id="gR">₹0</div></div>
+            <div class="gt-item"><label>Grand Total</label><div class="gtv grn" id="gT">₹0</div></div></div></div>
+        <div class="section"><div class="sec-hdr"><div class="sec-title">📝 Terms & Bank</div><button class="btn btn-sm btn-outline" onclick="saveTermsBank()">💾 Default</button></div>
+            <div class="fg"><div class="fi"><label class="fl">Terms <button class="btn btn-sm btn-outline" style="margin-left:6px;padding:2px 6px;font-size:8px" onclick="loadDefaultTerms()">📋 Load Default</button></label><textarea class="fta" id="eTm" placeholder="1. Payment due 30 days" style="min-height:80px"></textarea></div><div class="fi"><label class="fl">🏦 Bank <button class="btn btn-sm btn-outline" style="margin-left:6px;padding:2px 6px;font-size:8px" onclick="loadDefaultBank()">📋 Load Default</button></label><textarea class="fta" id="eBk" placeholder="Bank: SBI&#10;A/C: 1234567890" style="min-height:80px"></textarea></div></div></div>
+        <div class="section"><div class="sec-hdr"><div class="sec-title">✍️ Signature</div><button class="btn btn-sm btn-outline" onclick="saveSignature()">💾 Default</button></div>
+            <div class="fg">
+                <div class="fi"><label class="fl">Signatory Name</label><input class="fin" id="sigName" placeholder="Authorized Signatory Name"></div>
+                <div class="fi"><label class="fl">Designation</label><input class="fin" id="sigDesig" placeholder="Director / Manager"></div>
+                <div class="fi"><label class="fl">Signature Image</label>
+                    <div class="sig-upload-box" id="sigBox" onclick="document.getElementById('sigInput').click()">
+                        <div class="placeholder">+ Upload Signature</div>
+                        <input type="file" id="sigInput" accept="image/*" onchange="handleSigUpload(this)">
+                    </div>
+                </div>
+            </div></div>
+        <div class="actions-bar"><button class="btn btn-outline" onclick="reset()">🗑️ Reset</button><button class="btn btn-green" onclick="saveE()">💾 Save</button></div>
+    </div>
+    <div class="tab-content" id="svTab"><div class="actions-bar"><button class="btn btn-sm btn-green" onclick="syncNow()">🔄 Sync Now</button></div><div class="est-list" id="eL"></div></div>
+    <div class="tab-content" id="pvTC"><div class="actions-bar"><button class="btn btn-outline" onclick="swTab('create')">← Edit</button><button class="btn btn-primary" onclick="dPDF()">📄 PDF</button><button class="btn btn-green" onclick="dXL()">📊 Excel</button><button class="btn btn-outline" onclick="dWD()">📝 Word</button><button class="btn btn-green" onclick="shareWA()">📲 WhatsApp</button><button class="btn btn-outline" onclick="window.print()">🖨️ Print</button></div><div class="preview-frame" id="pvF"></div></div>
+</div>
+
+<!-- LIGHTBOX with navigation -->
+<div class="lightbox" id="lb" onclick="lbClick(event)">
+    <span class="lightbox-close" onclick="closeLB()">×</span>
+    <img id="lbImg" src="">
+    <div class="lightbox-nav">
+        <button onclick="event.stopPropagation();lbNav(-1)">← Prev</button>
+        <button onclick="event.stopPropagation();lbNav(1)">Next →</button>
+    </div>
+    <div class="lightbox-counter" id="lbCount"></div>
+</div>
+
+<div id="tB"></div>
+<script>
+let pC=0,ests=[],mode='disc';
+let lbImages=[],lbIdx=0;
+let companyLogo='';
+let signatureImg='';
+let gToken='',gTokenExpiry=0,gSheetId='',tokenClient=null;
+const SK='sf_e7',CK='sf_c7',TK='sf_terms7',BK='sf_bank7',SGK='sf_sig7',LGK='sf_logo7',CIDK='sf_gcid',SHEETIDK='sf_sheetid';
+const I={loc:'<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1112 7a2.5 2.5 0 010 5z"/></svg>',ph:'<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>',ml:'<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>',gst:'<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>',usr:'<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>',bk:'<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M4 10h3v7H4zm6 0h4v7h-4zm8 0h3v7h-3zM2 19h20v3H2zm0-9L12 1l10 9z"/></svg>',tm:'<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M14 10H2v2h12zm0-4H2v2h12zM2 16h8v-2H2zm19.5-4.5L23 13l-6.99 7-4.51-4.5L13 14l3.01 3z"/></svg>',cam:'<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z"/><path fill="currentColor" d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>'};
+
+function init(){load();loadCo();loadDefaultsFromStorage();
+    document.getElementById('eDt').value=new Date().toISOString().split('T')[0];
+    const v=new Date();v.setDate(v.getDate()+15);document.getElementById('eVl').value=v.toISOString().split('T')[0];
+    document.getElementById('eNo').value='EST-'+String(ests.length+1).padStart(3,'0');
+    sv('eRev','Rev 0');document.getElementById('eStatus').value='Draft';
+    try{const cid=localStorage.getItem(CIDK);if(cid)sv('gClientId',cid);const sid=localStorage.getItem(SHEETIDK);if(sid){gSheetId=sid;document.getElementById('gSheetLink').innerHTML=`<a href="https://docs.google.com/spreadsheets/d/${sid}" target="_blank">Open Sheet ↗</a>`;document.getElementById('gSyncStatus').textContent='Connected before — click Connect to resume'}}catch(e){}
+    addP();rnList()}
+function load(){try{ests=JSON.parse(localStorage.getItem(SK))||[]}catch(e){ests=[]}}
+function sAll(){localStorage.setItem(SK,JSON.stringify(ests))}
+function loadCo(){try{const d=JSON.parse(localStorage.getItem(CK));if(d){sv('cN',d.n);sv('cG',d.g);sv('cA',d.a);sv('cP',d.p);sv('cE',d.e);if(d.logo){companyLogo=d.logo;showLogoPreview(d.logo)}}}catch(e){}}
+function saveCo(){const logoData=companyLogo;localStorage.setItem(CK,JSON.stringify({n:gv('cN'),g:gv('cG'),a:gv('cA'),p:gv('cP'),e:gv('cE'),logo:logoData}));toast('💾 Company Saved')}
+function loadDefaultsFromStorage(){
+    try{const t=localStorage.getItem(TK);if(t)sv('eTm',t)}catch(e){}
+    try{const b=localStorage.getItem(BK);if(b)sv('eBk',b)}catch(e){}
+    try{const s=JSON.parse(localStorage.getItem(SGK));if(s){sv('sigName',s.name||'');sv('sigDesig',s.desig||'');if(s.img){signatureImg=s.img;showSigPreview(s.img)}}}catch(e){}
+    try{const l=localStorage.getItem(LGK);if(l){companyLogo=l;showLogoPreview(l)}}catch(e){}}
+function saveTermsBank(){localStorage.setItem(TK,gv('eTm'));localStorage.setItem(BK,gv('eBk'));toast('💾 Terms & Bank Defaults Saved')}
+function loadDefaultTerms(){const t=localStorage.getItem(TK);if(t){sv('eTm',t);toast('📋 Default Terms Loaded')}else{toast('⚠️ No default terms saved yet')}}
+function loadDefaultBank(){const b=localStorage.getItem(BK);if(b){sv('eBk',b);toast('📋 Default Bank Loaded')}else{toast('⚠️ No default bank saved yet')}}
+function saveSignature(){const data={name:gv('sigName'),desig:gv('sigDesig'),img:signatureImg};localStorage.setItem(SGK,JSON.stringify(data));toast('💾 Signature Saved')}
+
+// Logo upload
+function handleLogoUpload(inp){if(!inp.files||!inp.files[0])return;const f=inp.files[0];if(f.size>5e6){toast('⚠️ Max 5MB');return}const r=new FileReader();r.onload=e=>{companyLogo=e.target.result;showLogoPreview(e.target.result);localStorage.setItem(LGK,companyLogo)};r.readAsDataURL(f)}
+function showLogoPreview(src){const box=document.getElementById('logoBox');box.innerHTML=`<img src="${src}"><button class="img-remove" onclick="event.stopPropagation();removeLogo()">✕</button><input type="file" id="logoInput" accept="image/*" onchange="handleLogoUpload(this)" style="display:none">`}
+function removeLogo(){companyLogo='';localStorage.removeItem(LGK);const box=document.getElementById('logoBox');box.innerHTML=`<div class="placeholder">+ Upload Logo</div><input type="file" id="logoInput" accept="image/*" onchange="handleLogoUpload(this)">`}
+
+// Signature upload
+function handleSigUpload(inp){if(!inp.files||!inp.files[0])return;const f=inp.files[0];if(f.size>5e6){toast('⚠️ Max 5MB');return}const r=new FileReader();r.onload=e=>{signatureImg=e.target.result;showSigPreview(e.target.result)};r.readAsDataURL(f)}
+function showSigPreview(src){const box=document.getElementById('sigBox');box.innerHTML=`<img src="${src}"><button class="img-remove" onclick="event.stopPropagation();removeSig()">✕</button><input type="file" id="sigInput" accept="image/*" onchange="handleSigUpload(this)" style="display:none">`}
+function removeSig(){signatureImg='';const box=document.getElementById('sigBox');box.innerHTML=`<div class="placeholder">+ Upload Signature</div><input type="file" id="sigInput" accept="image/*" onchange="handleSigUpload(this)">`}
+
+function gv(id){return document.getElementById(id).value.trim()}
+function sv(id,v){document.getElementById(id).value=v||''}
+function cr(){return document.getElementById('eCr').value}
+function fm(n){return cr()+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fi(n){return cr()+Number(n).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function swTab(t){document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));const ts=document.querySelectorAll('.tab');if(t==='create'){ts[0].classList.add('active');document.getElementById('crTab').classList.add('active')}else if(t==='saved'){ts[1].classList.add('active');document.getElementById('svTab').classList.add('active');rnList()}else{ts[2].classList.add('active');document.getElementById('pvTC').classList.add('active');bPV()}}
+function setM(m){mode=m;document.getElementById('mD').classList.toggle('active',m==='disc');document.getElementById('mN').classList.toggle('active',m==='nsp');document.querySelectorAll('.df').forEach(el=>el.style.display=m==='disc'?'':'none');document.querySelectorAll('.nf').forEach(el=>el.style.display=m==='nsp'?'':'none');calcAll()}
+
+// Lightbox with navigation
+function openLB(src, allImgs, idx){
+    if(allImgs && allImgs.length){lbImages=allImgs;lbIdx=idx||0}else{lbImages=[src];lbIdx=0}
+    showLBImg();
+    document.getElementById('lb').classList.add('show')}
+function showLBImg(){
+    document.getElementById('lbImg').src=lbImages[lbIdx];
+    const nav=document.querySelector('.lightbox-nav');
+    const cnt=document.getElementById('lbCount');
+    if(lbImages.length>1){nav.style.display='flex';cnt.textContent=`${lbIdx+1} of ${lbImages.length}`}else{nav.style.display='none';cnt.textContent=''}}
+function lbNav(dir){lbIdx=(lbIdx+dir+lbImages.length)%lbImages.length;showLBImg()}
+function lbClick(e){if(e.target===document.getElementById('lb'))closeLB()}
+function closeLB(){document.getElementById('lb').classList.remove('show')}
+
+const ROOM_OPTS=['Living Room','Master Bedroom',"Parents' Room",'Guest Bedroom','Kids Bedroom','Dining Room','Dining Area','Kitchen','Modular Kitchen','Foyer / Entrance','Passage / Corridor','Puja Room','Study / Home Office','Home Theatre','Balcony','Terrace','Bathroom / Washroom','Staircase','Utility Area','Garage','Garden / Landscape','Facade / Elevation','Reception Area','Office Cabin','Conference Room','Retail / Showroom','Common Area','Other'];
+const CLR_OPTS=['Black','White','Silver','Gold','Bronze','Grey','Champagne'];
+const SHADE_OPTS=['Shiny Chrome Black','Matt Black','Matt White','Matt Gold','Satin Silver','Black Chrome','Rose Gold','Champagne Gold','Antique Brass','Brushed Nickel'];
+const MAT_OPTS=['Aluminium Die-Cast','Aluminium Extruded','Polycarbonate (PC)','Stainless Steel 304','Cold Rolled Steel (CRCA)','Brass'];
+const KELVIN_OPTS=['2200K Amber','2700K Warm White','3000K Warm White','3500K Neutral White','4000K Neutral White','5000K Cool White','6000K Day White','6500K Cool Daylight','RGB','RGBW','Tunable White (2700K–6500K)'];
+const FUNC_OPTS=['On-Off','Dimmable (Triac)','Dimmable (0-10V)','DALI Dimmable','DALI Tunable White','RGB Colour Changing','RGBW','RGBCCT','Smart WiFi / App Control','Motion Sensor Based'];
+const CRI_OPTS=['CRI 70','CRI 80','CRI 90','CRI 95','CRI 97'];
+const IP_OPTS=['IP20 (Indoor Dry)','IP44 (Splash Proof)','IP54 (Dust / Splash Protected)','IP65 (Water Jet Proof)','IP66 (Heavy Water Jet)','IP67 (Temp. Submersible)','IP68 (Underwater)'];
+const MOUNT_OPTS=['Surface Mounted','Recessed / Concealed','Suspended / Pendant','Track Mounted','Wall Mounted / Sconce','Ground Recessed / In-ground','Pole / Post Mounted','Magnetic Track','Clamp / Profile Mounted'];
+const DRIVER_OPTS=['Constant Current','Constant Voltage','DALI Driver','0-10V Dimmable Driver','Triac Dimmable Driver','Non-Dimmable'];
+const WARR_OPTS=['1 Year','2 Years','3 Years','5 Years','7 Years','10 Years'];
+const VOLT_OPTS=['230V AC','110V AC','24V DC','12V DC','48V DC','PoE (Power over Ethernet)'];
+const PROTO_OPTS=['None / Standalone','DALI-2','Zigbee','Z-Wave','KNX','Matter','WiFi','RF 2.4GHz','Bluetooth Mesh','0-10V Analog'];
+const LIFE_OPTS=['15,000 hrs','20,000 hrs','30,000 hrs (L70)','50,000 hrs (L70)','70,000 hrs (L70)','100,000 hrs (L70)'];
+const BRAND_OPTS=['Trix','Focus Lighting & Fixtures','Philips','Havells','Wipro','Syska','Other'];
+function mkSel(field,val,opts,ph){ph=ph||'--';let h=`<select class="fsel" data-f="${field}"><option value="">${ph}</option>`;opts.forEach(o=>{h+=`<option ${val===o?'selected':''}>${o}</option>`});return h+'</select>'}
+function addP(p){pC++;const i=pC;p=p||{};const ph=p.photos||[];
+    document.getElementById('pCt').insertAdjacentHTML('beforeend',`<div class="prod-card" id="pc${i}"><div class="prod-hdr"><div class="prod-num"><span class="prod-badge">#${i}</span></div><button class="prod-remove" onclick="rmP(${i})">✕</button></div>
+    <div class="fg"><div class="fi c2"><label class="fl">Product <span class="req">*</span></label><input class="fin" data-f="name" value="${p.name||''}" placeholder="LED Panel Light"></div>
+        <div class="fi"><label class="fl">Qty <span class="req">*</span></label><input type="number" class="fin" data-f="qty" value="${p.qty||1}" min="1" oninput="calcAll()"></div>
+        <div class="fi c2"><label class="fl">🏠 Room / Area</label>${mkSel('room',p.room,ROOM_OPTS,'-- Select Room --')}</div>
+        <div class="fi"><label class="fl">Body Colour</label>${mkSel('clr',p.clr,CLR_OPTS)}</div>
+        <div class="fi"><label class="fl">Shade / Finish</label>${mkSel('shade',p.shade,SHADE_OPTS)}</div>
+        <div class="fi"><label class="fl">Body Material</label>${mkSel('mat',p.mat,MAT_OPTS)}</div>
+        <div class="fi"><label class="fl">Kelvin / CCT</label>${mkSel('kelvin',p.kelvin,KELVIN_OPTS)}</div>
+        <div class="fi"><label class="fl">Function</label>${mkSel('func',p.func,FUNC_OPTS)}</div>
+        <div class="fi"><label class="fl">CRI</label>${mkSel('cri',p.cri,CRI_OPTS)}</div>
+        <div class="fi"><label class="fl">Beam Angle</label><input class="fin" list="dlBeam" data-f="deg" value="${p.deg||''}" placeholder="120°"></div>
+        <div class="fi"><label class="fl">Wattage</label><input class="fin" data-f="watt" value="${p.watt||''}" placeholder="40W"></div>
+        <div class="fi"><label class="fl">Lumens (lm)</label><input class="fin" list="dlLumens" data-f="lumens" value="${p.lumens||''}" placeholder="3200"></div>
+        <div class="fi"><label class="fl">Cutout Size</label><input class="fin" list="dlCutout" data-f="cutout" value="${p.cutout||''}" placeholder="Ø 75mm"></div>
+        <div class="fi"><label class="fl">IP Rating</label>${mkSel('ip',p.ip,IP_OPTS)}</div>
+        <div class="fi"><label class="fl">Mounting</label>${mkSel('mount',p.mount,MOUNT_OPTS)}</div>
+        <div class="fi"><label class="fl">Driver Type</label>${mkSel('driver',p.driver,DRIVER_OPTS)}</div>
+        <div class="fi"><label class="fl">Warranty</label>${mkSel('warranty',p.warranty,WARR_OPTS)}</div>
+        <div class="fi"><label class="fl">Model / SKU</label><input class="fin" data-f="model" value="${p.model||''}" placeholder="TRX-COB-40"></div>
+        <div class="fi"><label class="fl">Brand / Make</label><input class="fin" list="dlBrand" data-f="brand" value="${p.brand||''}" placeholder="Trix"></div>
+        <div class="fi"><label class="fl">Voltage / Input</label>${mkSel('voltage',p.voltage,VOLT_OPTS)}</div>
+        <div class="fi"><label class="fl">Control Protocol</label>${mkSel('protocol',p.protocol,PROTO_OPTS)}</div>
+        <div class="fi"><label class="fl">Life Hours (L70)</label>${mkSel('life',p.life,LIFE_OPTS)}</div></div>
+    <div class="pricing-section">
+        <div class="pricing-row df" style="${mode!=='disc'?'display:none':''}">
+            <div class="fi"><label class="fl">MRP/Unit <span class="req">*</span></label><input type="number" class="fin" data-f="mrp" value="${p.mrp||''}" step=".01" min="0" oninput="calcAll()"></div>
+            <div class="fi"><label class="fl">Discount %</label><input type="number" class="fin" data-f="disc" value="${p.disc||0}" step=".01" min="0" max="100" oninput="calcAll()"></div>
+            <div class="fi"><label class="fl">GST %</label><select class="fsel" data-f="gst" onchange="calcAll()"><option value="0" ${p.gst==0?'selected':''}>0%</option><option value="5" ${p.gst==5?'selected':''}>5%</option><option value="12" ${p.gst==12?'selected':''}>12%</option><option value="18" ${(p.gst==18||p.gst===undefined)?'selected':''}>18%</option><option value="28" ${p.gst==28?'selected':''}>28%</option></select></div>
+            <div class="fi"><label class="fl" style="color:var(--red)">🔒 Buy</label><input type="number" class="fin" data-f="buy" value="${p.buy||''}" step=".01" style="border-color:rgba(239,68,68,.2)" oninput="calcAll()"></div>
+            <div class="fi"><label class="fl" style="color:var(--red)">🔒 BuyGST%</label><select class="fsel" data-f="buyGST" onchange="calcAll()" style="border-color:rgba(239,68,68,.2)"><option value="0" ${p.buyGST==0?'selected':''}>0%</option><option value="5" ${p.buyGST==5?'selected':''}>5%</option><option value="12" ${p.buyGST==12?'selected':''}>12%</option><option value="18" ${(p.buyGST==18||p.buyGST===undefined)?'selected':''}>18%</option><option value="28" ${p.buyGST==28?'selected':''}>28%</option></select></div></div>
+        <div class="pricing-row nsp-row nf" style="${mode!=='nsp'?'display:none':''}">
+            <div class="fi"><label class="fl">NSP/Unit (Buy) <span class="req">*</span></label><input type="number" class="fin" data-f="nsp" value="${p.nsp||''}" step=".01" min="0" oninput="calcAll()"></div>
+            <div class="fi"><label class="fl">NSP GST %</label><select class="fsel" data-f="nspBuyGst" onchange="calcAll()"><option value="0" ${p.nspBuyGst==0?'selected':''}>0%</option><option value="5" ${p.nspBuyGst==5?'selected':''}>5%</option><option value="12" ${p.nspBuyGst==12?'selected':''}>12%</option><option value="18" ${(p.nspBuyGst==18||p.nspBuyGst===undefined)?'selected':''}>18%</option><option value="28" ${p.nspBuyGst==28?'selected':''}>28%</option></select></div>
+            <div class="fi"><label class="fl">Markup %</label><input type="number" class="fin" data-f="markup" value="${p.markup||0}" step=".01" min="0" oninput="calcAll()"></div>
+            <div class="fi"><label class="fl">Sell GST %</label><select class="fsel" data-f="nspGst" onchange="calcAll()"><option value="0" ${p.nspGst==0?'selected':''}>0%</option><option value="5" ${p.nspGst==5?'selected':''}>5%</option><option value="12" ${p.nspGst==12?'selected':''}>12%</option><option value="18" ${(p.nspGst==18||p.nspGst===undefined)?'selected':''}>18%</option><option value="28" ${p.nspGst==28?'selected':''}>28%</option></select></div>
+            <div class="fi"><label class="fl">MRP/Unit</label><input type="number" class="fin" data-f="nspMrp" value="${p.nspMrp||''}" step=".01" min="0" placeholder="For display" oninput="calcAll()"></div></div></div>
+    <div class="price-calc" id="pc${i}c"></div>
+    <div class="internal-section" id="pi${i}"><div class="internal-label">🔒 Internal</div><div class="internal-grid" id="pig${i}"></div></div>
+    <div class="photos-area"><label class="fl">📷 Photos (4 max)</label><div class="photos-grid" id="ph${i}">${[0,1,2,3].map(j=>`<div class="photo-slot" onclick="document.getElementById('fi${i}_${j}').click()"><span class="ph-ph">+</span><input type="file" id="fi${i}_${j}" accept="image/*" onchange="hPh(${i},${j},this)"></div>`).join('')}</div></div></div>`);
+    if(ph.length)ph.forEach((s,j)=>{if(s&&j<4){const sl=document.querySelectorAll(`#ph${i} .photo-slot`)[j];if(sl)sl.innerHTML=`<img src="${s}"><button class="photo-remove" onclick="event.stopPropagation();rPh(${i},${j})">✕</button><input type="file" id="fi${i}_${j}" accept="image/*" onchange="hPh(${i},${j},this)" style="display:none">`}});
+    calcAll()}
+function rmP(i){const el=document.getElementById('pc'+i);if(el)el.remove();if(!document.querySelectorAll('.prod-card').length)addP();calcAll()}
+function hPh(a,b,inp){if(!inp.files||!inp.files[0])return;const f=inp.files[0];if(f.size>5e6){toast('⚠️ Max 5MB');return}const r=new FileReader();r.onload=e=>{const sl=document.querySelectorAll(`#ph${a} .photo-slot`)[b];sl.innerHTML=`<img src="${e.target.result}"><button class="photo-remove" onclick="event.stopPropagation();rPh(${a},${b})">✕</button><input type="file" id="fi${a}_${b}" accept="image/*" onchange="hPh(${a},${b},this)" style="display:none">`};r.readAsDataURL(f)}
+function rPh(a,b){const sl=document.querySelectorAll(`#ph${a} .photo-slot`)[b];sl.innerHTML=`<span class="ph-ph">+</span><input type="file" id="fi${a}_${b}" accept="image/*" onchange="hPh(${a},${b},this)">`}
+
+function gPs(){const cs=document.querySelectorAll('.prod-card');const ps=[];cs.forEach(c=>{const g=f=>{const el=c.querySelector(`[data-f="${f}"]`);return el?el.value.trim():''};const phs=[];c.querySelectorAll('.photo-slot img').forEach(img=>phs.push(img.src));ps.push({name:g('name'),qty:+g('qty')||1,room:g('room'),clr:g('clr'),shade:g('shade'),mat:g('mat'),kelvin:g('kelvin'),func:g('func'),cri:g('cri'),deg:g('deg'),watt:g('watt'),lumens:g('lumens'),cutout:g('cutout'),ip:g('ip'),mount:g('mount'),driver:g('driver'),warranty:g('warranty'),model:g('model'),brand:g('brand'),voltage:g('voltage'),protocol:g('protocol'),life:g('life'),mrp:+g('mrp')||0,disc:+g('disc')||0,gst:+g('gst')||0,buy:+g('buy')||0,buyGST:+g('buyGST')||0,nsp:+g('nsp')||0,markup:+g('markup')||0,nspGst:+g('nspGst')||0,nspBuyGst:+g('nspBuyGst')||0,nspMrp:+g('nspMrp')||0,photos:phs,mode})});return ps}
+
+function cP(p){
+    if(p.mode==='nsp'){
+        const nspU=p.nsp;
+        const buyCostU=nspU+nspU*p.nspBuyGst/100;
+        const tb=buyCostU*p.qty;
+        const sellU=nspU+nspU*p.markup/100;
+        const sellTotal=sellU*p.qty;
+        const sellGst=sellTotal*p.nspGst/100;
+        const fn=sellTotal+sellGst;
+        const pf=fn-tb;
+        const mrpTotal=p.nspMrp>0?p.nspMrp*p.qty:sellTotal;
+        return{mt:mrpTotal,da:0,ad:sellTotal,ga:sellGst,fn,tb,pf,nspU,buyCostU,sellU,nspMrp:p.nspMrp,isN:true}}
+    const mt=p.mrp*p.qty,da=mt*p.disc/100,ad=mt-da,ga=ad*p.gst/100,fn=ad+ga;
+    const bt=p.buy*p.qty,bg=bt*p.buyGST/100,tb=bt+bg,pf=fn-tb;
+    return{mt,da,ad,ga,fn,tb,pf,isN:false}}
+
+function calcAll(){
+    const ps=gPs();let gM=0,gD=0,gS=0,gG=0,gR=0;const cs=document.querySelectorAll('.prod-card');
+    ps.forEach((p,pi)=>{const c=cP(p);gM+=c.mt;gD+=c.da;gS+=c.ad;gG+=c.ga;gR+=c.fn;
+        const card=cs[pi];if(card){const id=card.id.replace('pc','');
+            const el=document.getElementById('pc'+id+'c');
+            if(el){
+                if(c.isN){
+                    el.innerHTML=`<div class="price-calc-grid">
+                        <div><div class="pcv-label">NSP (Buy)/Unit</div><div class="pcv blu">${fi(c.nspU)}</div></div>
+                        <div><div class="pcv-label">Buy Cost/Unit</div><div class="pcv org">${fi(c.buyCostU)}</div></div>
+                        <div><div class="pcv-label">Selling Price/Unit</div><div class="pcv pur">${fi(c.sellU)}</div></div>
+                        <div><div class="pcv-label">Sell GST</div><div class="pcv org">+${fi(c.ga)}</div></div>
+                        <div><div class="pcv-label">Total</div><div class="pcv grn">${fi(c.fn)}</div></div></div>`}
+                else{
+                    el.innerHTML=`<div class="price-calc-grid">
+                        <div><div class="pcv-label">MRP</div><div class="pcv pur">${fi(c.mt)}</div></div>
+                        <div><div class="pcv-label">Disc</div><div class="pcv red">-${fi(c.da)}</div></div>
+                        <div><div class="pcv-label">Subtotal</div><div class="pcv blu">${fi(c.ad)}</div></div>
+                        <div><div class="pcv-label">GST</div><div class="pcv org">+${fi(c.ga)}</div></div>
+                        <div><div class="pcv-label">Total</div><div class="pcv grn">${fi(c.fn)}</div></div></div>`}}
+            const ig=document.getElementById('pig'+id);
+            if(ig){
+                if(c.isN){
+                    ig.innerHTML=`
+                        <div class="int-item"><label>Buy/Unit</label><div class="int-val cost">${fi(c.buyCostU)}</div></div>
+                        <div class="int-item"><label>Total Cost</label><div class="int-val cost">${fi(c.tb)}</div></div>
+                        <div class="int-item"><label>Sell Total</label><div class="int-val sell">${fi(c.fn)}</div></div>
+                        <div class="int-item"><label>Profit</label><div class="int-val ${c.pf>=0?'profit':'neg'}">${c.pf>=0?'+':''}${fi(c.pf)}</div></div>
+                        <div class="int-item"><label>Margin</label><div class="int-val ${c.pf>=0?'profit':'neg'}">${c.fn>0?(c.pf/c.fn*100).toFixed(1):0}%</div></div>
+                        <div class="int-item"><label>Profit/Unit</label><div class="int-val ${c.pf>=0?'profit':'neg'}">${p.qty>0?fi(c.pf/p.qty):'—'}</div></div>`}
+                else{
+                    ig.innerHTML=`
+                        <div class="int-item"><label>Cost</label><div class="int-val cost">${fi(c.tb)}</div></div>
+                        <div class="int-item"><label>Sell</label><div class="int-val sell">${fi(c.fn)}</div></div>
+                        <div class="int-item"><label>Profit</label><div class="int-val ${c.pf>=0?'profit':'neg'}">${c.pf>=0?'+':''}${fi(c.pf)}</div></div>
+                        <div class="int-item"><label>Margin</label><div class="int-val ${c.pf>=0?'profit':'neg'}">${c.fn>0?(c.pf/c.fn*100).toFixed(1):0}%</div></div>
+                        <div class="int-item"><label>/Unit</label><div class="int-val ${c.pf>=0?'profit':'neg'}">${p.qty>0?fi(c.pf/p.qty):'—'}</div></div>
+                        <div class="int-item"></div>`}}}});
+    const ro=Math.round(gR)-gR,gt=Math.round(gR);
+    document.getElementById('gM').textContent=fi(gM);document.getElementById('gD').textContent='-'+fi(gD);
+    document.getElementById('gS').textContent=fi(gS);document.getElementById('gG').textContent=fi(gG);
+    document.getElementById('gR').textContent=(ro>=0?'+':'')+fm(ro);document.getElementById('gT').textContent=fi(gt);
+    bPV()}
+
+function gD(){return{co:{n:gv('cN'),g:gv('cG'),a:gv('cA'),p:gv('cP'),e:gv('cE'),logo:companyLogo},cu:{n:gv('uN'),c:gv('uC'),g:gv('uG'),a:gv('uA'),p:gv('uP'),e:gv('uE')},eNo:gv('eNo'),eDt:gv('eDt'),eVl:gv('eVl'),cur:cr(),site:gv('eSite'),rev:gv('eRev'),status:gv('eStatus'),revNote:gv('eRevNote'),products:gPs(),terms:gv('eTm'),bank:gv('eBk'),mode,sig:{name:gv('sigName'),desig:gv('sigDesig'),img:signatureImg}}}
+
+function bPV(){
+    const d=gD();const c=d.cur;
+    const f2=n=>c+Number(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    const f0=n=>c+Number(n).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0});
+    let tM=0,tD=0,tS=0,tG=0,tR=0;const vp=d.products.filter(p=>p.name);
+
+    // Collect all photos for gallery
+    let allGalleryPhotos=[];
+    vp.forEach((p,i)=>{if(p.photos&&p.photos.length){allGalleryPhotos.push({name:p.name,idx:i+1,photos:p.photos})}});
+
+    function tags(p){let s='';if(p.brand)s+=`<span class="pv-tag">${p.brand}</span>`;if(p.model)s+=`<span class="pv-tag">${p.model}</span>`;if(p.clr)s+=`<span class="pv-tag">${p.clr}</span>`;if(p.shade)s+=`<span class="pv-tag">${p.shade}</span>`;if(p.mat)s+=`<span class="pv-tag">${p.mat}</span>`;if(p.kelvin)s+=`<span class="pv-tag">${p.kelvin}</span>`;if(p.func)s+=`<span class="pv-tag">${p.func}</span>`;if(p.cri)s+=`<span class="pv-tag">${p.cri}</span>`;if(p.deg)s+=`<span class="pv-tag">${p.deg.toString().includes('°')?p.deg:p.deg+'°'}</span>`;if(p.watt)s+=`<span class="pv-tag">${p.watt.toString().toUpperCase().includes('W')?p.watt:p.watt+'W'}</span>`;if(p.lumens)s+=`<span class="pv-tag">${p.lumens}lm</span>`;if(p.cutout)s+=`<span class="pv-tag">Cutout: ${p.cutout}</span>`;if(p.ip)s+=`<span class="pv-tag">${p.ip}</span>`;if(p.mount)s+=`<span class="pv-tag">${p.mount}</span>`;if(p.driver)s+=`<span class="pv-tag">${p.driver}</span>`;if(p.voltage)s+=`<span class="pv-tag">${p.voltage}</span>`;if(p.protocol&&p.protocol!=='None / Standalone')s+=`<span class="pv-tag">${p.protocol}</span>`;if(p.life)s+=`<span class="pv-tag">${p.life}</span>`;if(p.warranty)s+=`<span class="pv-tag">Warranty: ${p.warranty}</span>`;return s}
+    function roomLbl(p){return (!groupedMode&&p.room)?`<div class="pv-room">📍 ${p.room}</div>`:''}
+
+    const isN=d.mode==='nsp';let rows='';
+    // Build flat array of all images for lightbox navigation
+    let allImgFlat=[];
+    vp.forEach(p=>{if(p.photos)p.photos.forEach(s=>allImgFlat.push(s))});
+
+    const groupedMode=vp.some(p=>p.room);
+    const colspan=isN?8:9;
+
+    function buildRow(p,i){
+        const cp=cP(p);tM+=cp.mt;tD+=cp.da;tS+=cp.ad;tG+=cp.ga;tR+=cp.fn;const sp=tags(p);
+        let phH='';if(p.photos&&p.photos.length){
+            phH=`<div class="pv-photos-row">${p.photos.map((s,pi)=>{
+                const gIdx=allImgFlat.indexOf(s);
+                return `<img src="${s}" onclick="openLB('${s.replace(/'/g,"\\'")}',pvAllImgs,${gIdx})">`}).join('')}</div>`}
+        let row;
+        if(isN){
+            const mrpDisp=cp.nspMrp>0?f2(cp.nspMrp):'—';
+            const sellDisp=f2(cp.sellU);
+            row=`<tr>
+                <td style="text-align:center">${i+1}</td>
+                <td><div class="pv-pname">${p.name}</div>${roomLbl(p)}${sp?`<div class="pv-specs">${sp}</div>`:''}${phH}</td>
+                <td style="text-align:center">${p.qty} </td>
+                <td style="text-align:right">${mrpDisp}</td>
+                <td style="text-align:right">${sellDisp}</td>
+                <td style="text-align:right">${f2(cp.ad)}</td>
+                <td style="text-align:center">${p.nspGst}%</td>
+                <td style="text-align:right;font-weight:700;color:#1B4332">${f2(cp.fn)}</td></tr>`}
+        else{
+            row=`<tr>
+                <td style="text-align:center">${i+1}</td>
+                <td><div class="pv-pname">${p.name}</div>${roomLbl(p)}${sp?`<div class="pv-specs">${sp}</div>`:''}${phH}</td>
+                <td style="text-align:center">${p.qty} </td>
+                <td style="text-align:right">${f2(p.mrp)}</td>
+                <td style="text-align:right">${f2(cp.mt)}</td>
+                <td style="text-align:center;color:#ef4444">${p.disc>0?p.disc+'%':'—'}</td>
+                <td style="text-align:right;color:#ef4444">${cp.da>0?'-'+f2(cp.da):'—'}</td>
+                <td style="text-align:center">${p.gst}%</td>
+                <td style="text-align:right;font-weight:700;color:#1B4332">${f2(cp.fn)}</td></tr>`}
+        return{row,fn:cp.fn}}
+
+    if(groupedMode){
+        // Group products by room, preserving order of first appearance; unset room goes last
+        let groups=[],gIdx={};
+        vp.forEach((p,idx)=>{const key=p.room||'\u0000none';if(!(key in gIdx)){gIdx[key]=groups.length;groups.push({room:p.room||'',items:[]})}groups[gIdx[key]].items.push({p,idx})});
+        groups.sort((a,b)=>{if(!a.room&&b.room)return 1;if(a.room&&!b.room)return -1;return 0});
+        groups.forEach(g=>{
+            rows+=`<tr class="pv-room-hdr"><td colspan="${colspan}">📍 ${g.room||'General / Other Items'}</td></tr>`;
+            let gTotal=0,gQty=0;
+            g.items.forEach(({p,idx})=>{const{row,fn}=buildRow(p,idx);rows+=row;gTotal+=fn;gQty+=(+p.qty||0)});
+            rows+=`<tr class="pv-room-sub"><td colspan="${colspan}">${gQty} qty &nbsp;•&nbsp; Room Subtotal: ${f2(gTotal)}</td></tr>`})
+    } else {
+        vp.forEach((p,i)=>{const{row}=buildRow(p,i);rows+=row})
+    }
+
+    const ro=Math.round(tR)-tR,gt=Math.round(tR);
+    const dtF=d.eDt?new Date(d.eDt+'T00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'';
+    const vlF=d.eVl?new Date(d.eVl+'T00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'';
+
+    let coAddr=d.co.a?`<div class="pv-co-addr">${d.co.a.replace(/\n/g,', ')}</div>`:'';
+    let coRow='';if(d.co.p||d.co.e){coRow='<div class="pv-co-row">';if(d.co.p)coRow+=`<div class="pv-co-item">${I.ph} ${d.co.p}</div>`;if(d.co.e)coRow+=`<div class="pv-co-item">${I.ml} ${d.co.e}</div>`;coRow+='</div>'}
+
+    let logoHTML='';if(d.co.logo){logoHTML=`<div class="pv-logo"><img src="${d.co.logo}"></div>`}
+
+    let cuH='';if(d.cu.n||d.cu.c){cuH=`<div class="pv-to"><div class="pv-to-label">${I.usr} To</div>`;if(d.cu.n)cuH+=`<div class="pv-to-name">${d.cu.n}</div>`;if(d.cu.c)cuH+=`<div class="pv-to-comp">${d.cu.c}</div>`;if(d.cu.a)cuH+=`<div class="pv-to-line">${I.loc}<span>${d.cu.a.replace(/\n/g,'<br>')}</span></div>`;if(d.cu.p)cuH+=`<div class="pv-to-line">${I.ph}<span>${d.cu.p}</span></div>`;if(d.cu.e)cuH+=`<div class="pv-to-line">${I.ml}<span>${d.cu.e}</span></div>`;if(d.cu.g)cuH+=`<div class="pv-to-line">${I.gst}<span>GSTIN: ${d.cu.g}</span></div>`;cuH+='</div>'}
+
+    let th;
+    if(isN){
+        th=`<th style="text-align:center;width:36px">S.No.</th>
+            <th>Product Description</th>
+            <th style="text-align:center">Qty </th>
+            <th style="text-align:right">MRP/Unit (${c})</th>
+            <th style="text-align:right">Selling Price/Unit (${c})</th>
+            <th style="text-align:right">Subtotal (${c})</th>
+            <th style="text-align:center">GST%</th>
+            <th style="text-align:right">Amount (${c})</th>`}
+    else{
+        th=`<th style="text-align:center;width:36px">S.No.</th>
+            <th>Product Description</th>
+            <th style="text-align:center">Qty </th>
+            <th style="text-align:right">MRP/Unit (${c})</th>
+            <th style="text-align:right">MRP Amt (${c})</th>
+            <th style="text-align:center">Disc%</th>
+            <th style="text-align:right">Disc Amt (${c})</th>
+            <th style="text-align:center">GST%</th>
+            <th style="text-align:right">Amount (${c})</th>`}
+
+    let boxes='';if(d.terms||d.bank){boxes='<div class="pv-boxes">';if(d.terms)boxes+=`<div class="pv-box"><h5>${I.tm} Terms & Conditions</h5><ol>${d.terms.split('\n').filter(l=>l.trim()).map(l=>`<li>${l.replace(/^\d+\.\s*/,'')}</li>`).join('')}</ol></div>`;if(d.bank)boxes+=`<div class="pv-box"><h5>${I.bk} Bank Details</h5><p>${d.bank.replace(/\n/g,'<br>')}</p></div>`;boxes+='</div>'}
+
+    let totalsHTML;
+    if(isN){
+        totalsHTML=`
+            ${tM>tS?`<div class="pv-tot-row"><span>MRP Total</span><span>${f2(tM)}</span></div>`:''}
+            <div class="pv-tot-row"><span>Subtotal </span><span>${f2(tS)}</span></div>
+            <div class="pv-tot-row"><span>GST</span><span>+${f2(tG)}</span></div>
+            <div class="pv-tot-row roff"><span>Round Off</span><span>${ro>=0?'+':''}${f2(ro)}</span></div>
+            <div class="pv-tot-row grand"><span>Grand Total</span><span>${f0(gt)}</span></div>`}
+    else{
+        totalsHTML=`
+            <div class="pv-tot-row"><span>Total MRP</span><span>${f2(tM)}</span></div>
+            ${tD>0?`<div class="pv-tot-row"><span>Discount</span><span class="disc">-${f2(tD)}</span></div>`:''}
+            <div class="pv-tot-row"><span>Subtotal</span><span>${f2(tS)}</span></div>
+            <div class="pv-tot-row"><span>GST</span><span>+${f2(tG)}</span></div>
+            <div class="pv-tot-row roff"><span>Round Off</span><span>${ro>=0?'+':''}${f2(ro)}</span></div>
+            <div class="pv-tot-row grand"><span>Grand Total</span><span>${f0(gt)}</span></div>`}
+
+    // Build photo gallery section
+    let galleryHTML='';
+    if(allGalleryPhotos.length){
+        galleryHTML=`<div class="pv-gallery">
+            <div class="pv-gallery-title">${I.cam} Product Photos</div>`;
+        allGalleryPhotos.forEach(gp=>{
+            galleryHTML+=`<div class="pv-gallery-product">
+                <div class="pv-gallery-product-name">#${gp.idx} — ${gp.name}</div>
+                <div class="pv-gallery-imgs">`;
+            gp.photos.forEach((src,pi)=>{
+                const gIdx=allImgFlat.indexOf(src);
+                galleryHTML+=`<div class="pv-gallery-img-wrap" onclick="openLB('${src.replace(/'/g,"\\'")}',pvAllImgs,${gIdx})">
+                    <img src="${src}">
+                    <div class="pv-gallery-img-label">Photo ${pi+1}</div></div>`});
+            galleryHTML+=`</div></div>`});
+        galleryHTML+=`</div>`}
+
+    // Signature section
+    let stampHTML=`<div class="pv-stamp"><div class="pv-stamp-box">`;
+    if(d.sig.img){stampHTML+=`<div class="pv-stamp-sig"><img src="${d.sig.img}"></div>`}
+    stampHTML+=`<div class="pv-stamp-line">${d.sig.name?d.sig.name:`For ${d.co.n||'Company'}`}${d.sig.desig?`<br><span style="font-size:9px;color:#666;font-weight:400">${d.sig.desig}</span>`:''}</div></div></div>`;
+
+    // Store all images globally for lightbox nav
+    window.pvAllImgs=allImgFlat;
+
+    document.getElementById('pvF').innerHTML=`
+        <div class="pv-hdr">
+            ${logoHTML}
+            <div class="pv-co-name">${d.co.n||'Your Company'}</div>
+            ${coAddr}${coRow}
+            ${d.co.g?`<div class="pv-co-gst">GSTIN: ${d.co.g}</div>`:''}
+            <div class="pv-gold-bar"></div>
+        </div>
+        <div class="pv-body">
+            <div class="pv-est-row"><div class="pv-em"><div class="pv-em-label">Estimate No.</div><div class="pv-em-val">${d.eNo||'—'}</div></div>${d.site?`<div class="pv-em"><div class="pv-em-label">Project / Site</div><div class="pv-em-val">${d.site}</div></div>`:''}<div class="pv-em"><div class="pv-em-label">Date</div><div class="pv-em-val">${dtF||'—'}</div></div>${vlF?`<div class="pv-em"><div class="pv-em-label">Valid Until</div><div class="pv-em-val">${vlF}</div></div>`:''}${d.rev?`<div class="pv-em"><div class="pv-em-label">Revision</div><div class="pv-em-val">${d.rev}</div></div>`:''}<div class="pv-est-title">ESTIMATE</div></div>
+            ${cuH}
+            <table class="pv-tbl"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>
+            <div class="pv-totals"><div class="pv-totals-box">${totalsHTML}</div></div>
+            ${boxes}
+            ${stampHTML}
+            ${galleryHTML}
+        </div>
+        <div class="pv-footer">Computer generated estimate · MYHOMEBOTS</div>`}
+
+function saveE(){const d=gD();if(!d.products.some(p=>p.name)){toast('⚠️ Add product');return}let gt=0;d.products.forEach(p=>{gt+=cP(p).fn});const newE={id:Date.now()+Math.random(),...d,total:Math.round(gt),at:new Date().toISOString()};ests.push(newE);sAll();sv('eNo','EST-'+String(ests.length+1).padStart(3,'0'));rnList();toast('💾 Saved!');if(gSheetId)pushOneSafe(newE)}
+function rnList(){document.getElementById('eC').textContent=ests.length;const ct=document.getElementById('eL');if(!ests.length){ct.innerHTML='<div class="empty"><div class="empty-icon">📂</div><h3>No estimates</h3></div>';return}ct.innerHTML='';[...ests].reverse().forEach(e=>{const df=new Date(e.at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});const stat=e.status||'Draft';ct.innerHTML+=`<div class="est-item"><div class="est-info"><h4>${e.eNo||'EST'} — ${e.cu?.c||e.cu?.n||'—'}</h4><div class="est-meta"><span>📅 ${df}</span><span>📦 ${(e.products||[]).filter(p=>p.name).length}</span>${e.site?`<span>🏗️ ${e.site}</span>`:''}${e.rev?`<span>🔁 ${e.rev}</span>`:''}</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><select class="fsel" style="padding:3px 6px;font-size:9px;width:auto" onchange="setEstStatus(${e.id},this.value)" onclick="event.stopPropagation()"><option ${stat==='Draft'?'selected':''}>Draft</option><option ${stat==='Sent'?'selected':''}>Sent</option><option ${stat==='Approved'?'selected':''}>Approved</option><option ${stat==='Rejected'?'selected':''}>Rejected</option><option ${stat==='Expired'?'selected':''}>Expired</option></select><div class="est-amount">${e.cur||'₹'}${Number(e.total||0).toLocaleString('en-IN')}</div><div class="est-actions"><button class="btn btn-sm btn-outline" onclick="ldE(${e.id})">✏️</button><button class="btn btn-sm btn-outline" onclick="dupE(${e.id})" title="Duplicate">📑</button><button class="btn btn-sm btn-primary" onclick="vwE(${e.id})">👁️</button><button class="btn btn-sm btn-danger" onclick="dlE(${e.id})">🗑️</button></div></div></div>`})}
+function setEstStatus(id,status){const e=ests.find(x=>x.id===id);if(!e)return;e.status=status;e.at=new Date().toISOString();sAll();toast('📊 Status: '+status);if(gSheetId)pushOneSafe(e)}
+function dupE(id){const e=ests.find(x=>x.id===id);if(!e)return;const copy=JSON.parse(JSON.stringify(e));copy.id=Date.now()+Math.random();copy.eNo=(e.eNo||'EST')+'-COPY';copy.status='Draft';copy.at=new Date().toISOString();ests.push(copy);sAll();rnList();toast('📑 Duplicated');if(gSheetId)pushOneSafe(copy)}
+function ldE(id){const e=ests.find(x=>x.id===id);if(!e)return;sv('cN',e.co?.n);sv('cG',e.co?.g);sv('cA',e.co?.a);sv('cP',e.co?.p);sv('cE',e.co?.e);if(e.co?.logo){companyLogo=e.co.logo;showLogoPreview(e.co.logo)}else{removeLogo()}sv('uN',e.cu?.n);sv('uC',e.cu?.c);sv('uG',e.cu?.g);sv('uA',e.cu?.a);sv('uP',e.cu?.p);sv('uE',e.cu?.e);sv('eNo',e.eNo);sv('eDt',e.eDt);sv('eVl',e.eVl);if(e.cur)document.getElementById('eCr').value=e.cur;sv('eSite',e.site);sv('eRev',e.rev);sv('eRevNote',e.revNote);document.getElementById('eStatus').value=e.status||'Draft';sv('eTm',e.terms);sv('eBk',e.bank);if(e.sig){sv('sigName',e.sig.name||'');sv('sigDesig',e.sig.desig||'');if(e.sig.img){signatureImg=e.sig.img;showSigPreview(e.sig.img)}else{removeSig()}}else{sv('sigName','');sv('sigDesig','');removeSig()}if(e.mode)setM(e.mode);pC=0;document.getElementById('pCt').innerHTML='';(e.products||[]).forEach(p=>{p.mode=e.mode||'disc';addP(p)});if(!(e.products||[]).length)addP();calcAll();swTab('create');toast('📋 Loaded')}
+function vwE(id){ldE(id);swTab('preview')}
+function dlE(id){if(!confirm('Delete?'))return;ests=ests.filter(e=>e.id!==id);sAll();rnList();toast('🗑️ Deleted');if(gSheetId)deleteFromCloud(id)}
+function reset(){if(!confirm('Clear?'))return;['uN','uC','uG','uA','uP','uE','eTm','eBk','sigName','sigDesig','eSite','eRevNote'].forEach(id=>sv(id,''));document.getElementById('eDt').value=new Date().toISOString().split('T')[0];const v=new Date();v.setDate(v.getDate()+15);document.getElementById('eVl').value=v.toISOString().split('T')[0];sv('eNo','EST-'+String(ests.length+1).padStart(3,'0'));sv('eRev','Rev 0');document.getElementById('eStatus').value='Draft';pC=0;document.getElementById('pCt').innerHTML='';addP();toast('🗑️ Cleared')}
+
+function pdfCSS(){return `*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;color:#222;font-size:11px;line-height:1.5}.pv-hdr{background:#1B4332;padding:20px 24px 16px;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact;position:relative}.pv-hdr::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#D4AF37,#B8860B,#D4AF37)}.pv-hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#D4AF37 30%,#D4AF37 70%,transparent)}.pv-logo{margin-bottom:8px}.pv-logo img{max-height:60px;max-width:200px;object-fit:contain}.pv-co-name{font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:900;color:#fff;letter-spacing:4px;text-transform:uppercase;margin-bottom:6px}.pv-co-addr{font-size:11px;color:#E8F5E9;font-weight:600;line-height:1.5;margin-bottom:6px}.pv-co-row{display:flex;justify-content:center;gap:28px;margin-bottom:5px}.pv-co-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#E8F5E9;font-weight:600}.pv-co-item svg{width:13px;height:13px;fill:#A5D6A7}.pv-co-gst{font-size:11px;color:#C8E6C9;font-weight:700;letter-spacing:1.5px}.pv-gold-bar{width:50px;height:1.5px;background:linear-gradient(90deg,transparent,#D4AF37,transparent);margin:6px auto 0}.pv-body{padding:16px 24px}.pv-est-row{display:flex;gap:18px;margin-bottom:14px;flex-wrap:wrap}.pv-em-label{font-size:8px;font-weight:700;text-transform:uppercase;color:#40916C}.pv-em-val{font-size:11px;font-weight:700;color:#1B4332}.pv-est-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:800;color:#1B4332;flex:1;text-align:right}.pv-to{border:1px solid #C8E6C9;border-radius:5px;padding:10px 14px;background:#F0FFF4;margin-bottom:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pv-to-label{font-size:8px;font-weight:700;color:#2D6A4F;margin-bottom:6px;display:flex;align-items:center;gap:4px}.pv-to-label svg{width:11px;height:11px;fill:#2D6A4F}.pv-to-name{font-size:13px;font-weight:800;color:#1B4332;margin-bottom:2px}.pv-to-comp{font-size:11px;font-weight:700;color:#2D6A4F;margin-bottom:4px}.pv-to-line{font-size:11px;color:#333;line-height:1.5;display:flex;align-items:flex-start;gap:5px;margin-bottom:2px}.pv-to-line svg{width:11px;height:11px;fill:#40916C;flex-shrink:0;margin-top:1px}.pv-tbl{width:100%;border-collapse:collapse;margin-bottom:12px}.pv-tbl th{background:#E8F5E9;padding:7px;text-align:left;font-size:8px;font-weight:700;text-transform:uppercase;color:#1B4332;border-bottom:2px solid #81C784;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pv-tbl td{padding:7px;border-bottom:1px solid #E8F5E9;font-size:11px;vertical-align:top}.pv-pname{font-size:11px;font-weight:700;color:#1B4332;margin-bottom:2px}.pv-specs{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px}.pv-tag{font-size:9px;font-weight:700;padding:1px 5px;border-radius:2px;background:#EEE;color:#333;border:1px solid #BDBDBD;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pv-room{font-size:9px;font-weight:700;color:#40916C;margin-top:1px;letter-spacing:.3px}.pv-room-hdr td{background:#1B4332!important;color:#fff!important;font-weight:800;font-size:10px;text-transform:uppercase;letter-spacing:.6px;padding:6px 10px!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pv-room-sub td{background:#F0FFF4!important;color:#2D6A4F!important;font-weight:700;font-size:10px;text-align:right;padding:5px 10px!important;border-bottom:2px solid #C8E6C9!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pv-photos-row{display:flex;gap:4px;margin-top:4px}.pv-photos-row img{width:40px;height:40px;object-fit:cover;border-radius:3px;border:1px solid #ddd}.pv-totals{display:flex;justify-content:flex-end;margin-bottom:12px}.pv-totals-box{width:240px;background:#F0FFF4;border:1px solid #C8E6C9;border-radius:5px;padding:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pv-tot-row{display:flex;justify-content:space-between;padding:3px 0;font-size:11px;color:#444}.pv-tot-row.grand{border-top:2px solid #1B4332;padding-top:7px;margin-top:4px;font-size:13px;font-weight:800;color:#1B4332}.disc{color:#ef4444}.roff{font-size:9px;color:#888}.pv-boxes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.pv-box{border:1px solid #C8E6C9;border-radius:5px;padding:10px;background:#F0FFF4;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pv-box h5{font-size:9px;font-weight:700;color:#1B4332;margin-bottom:5px;display:flex;align-items:center;gap:3px}.pv-box h5 svg{width:11px;height:11px;fill:#40916C}.pv-box p,.pv-box ol{font-size:11px;color:#444;line-height:1.5}.pv-box ol{padding-left:14px}.pv-gallery{margin-top:18px;padding-top:14px;border-top:2px solid #E8F5E9}.pv-gallery-title{font-size:11px;font-weight:800;color:#1B4332;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:5px}.pv-gallery-title svg{width:14px;height:14px;fill:#40916C}.pv-gallery-product{margin-bottom:16px;page-break-inside:avoid}.pv-gallery-product-name{font-size:11px;font-weight:700;color:#2D6A4F;margin-bottom:6px;padding:5px 8px;background:#F0FFF4;border-left:3px solid #40916C;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pv-gallery-imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}.pv-gallery-img-wrap{border:1px solid #E0E0E0;border-radius:5px;overflow:hidden;background:#fafafa}.pv-gallery-img-wrap img{width:100%;height:auto;display:block;max-height:200px;object-fit:contain;padding:5px}.pv-gallery-img-label{font-size:8px;color:#666;text-align:center;padding:3px 5px;background:#f5f5f5;border-top:1px solid #eee;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pv-stamp{display:flex;justify-content:flex-end;margin-top:20px;padding-top:10px;border-top:1px dashed #81C784}.pv-stamp-box{text-align:center}.pv-stamp-sig{margin-bottom:6px}.pv-stamp-sig img{max-height:50px;max-width:140px;object-fit:contain}.pv-stamp-line{width:150px;border-top:1px solid #333;padding-top:3px;font-size:10px;color:#444;text-align:center;font-weight:600}.pv-footer{background:#E8F5E9;padding:8px;text-align:center;font-size:8px;color:#6B8E7B;-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:6mm}`}
+function dPDF(){const el=document.getElementById('pvF');const w=window.open('','_blank');w.document.write(`<!DOCTYPE html><html><head><title>${gD().eNo||'Est'}</title><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"><style>${pdfCSS()}</style></head><body>${el.innerHTML}</body></html>`);w.document.close();setTimeout(()=>w.print(),500);toast('📄 Print → Save as PDF')}
+
+// Generate a real PDF Blob from the preview markup (used for WhatsApp file sharing / direct download)
+function genPdfBlob(){
+    return new Promise((resolve,reject)=>{
+        if(typeof html2pdf==='undefined'){reject(new Error('PDF engine not loaded'));return}
+        const el=document.getElementById('pvF');
+        const wrap=document.createElement('div');
+        wrap.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:#fff';
+        const styleTag=document.createElement('style');styleTag.textContent=pdfCSS();
+        wrap.appendChild(styleTag);
+        const inner=document.createElement('div');inner.innerHTML=el.innerHTML;
+        wrap.appendChild(inner);
+        document.body.appendChild(wrap);
+        const opt={margin:[6,6,6,6],filename:(gD().eNo||'estimate')+'.pdf',image:{type:'jpeg',quality:0.95},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}};
+        html2pdf().set(opt).from(wrap).outputPdf('blob').then(blob=>{document.body.removeChild(wrap);resolve(blob)}).catch(err=>{document.body.removeChild(wrap);reject(err)})
+    })
+}
+
+async function shareWA(){
+    const d=gD();const vp=d.products.filter(p=>p.name);if(!vp.length){toast('⚠️ Add product');return}
+    let gt=0;vp.forEach(p=>gt+=cP(p).fn);
+    const fname=(d.eNo||'estimate').replace(/\s+/g,'_')+'.pdf';
+    let caption=`*${d.co.n||'Estimate'}*`;if(d.site)caption+=` — ${d.site}`;caption+=`\nEstimate ${d.eNo||''}${d.rev?' ('+d.rev+')':''} — Grand Total: ${d.cur}${Math.round(gt).toLocaleString('en-IN')}`;
+    toast('⏳ Preparing PDF…');
+    try{
+        const blob=await genPdfBlob();
+        const file=new File([blob],fname,{type:'application/pdf'});
+        if(navigator.canShare&&navigator.canShare({files:[file]})){
+            await navigator.share({files:[file],title:d.eNo||'Estimate',text:caption});
+            toast('📲 Shared!');
+            return
+        }
+        // Fallback: browsers without native file-share (mostly desktop) — download the PDF and open WhatsApp with the text so the user can attach it manually
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');a.href=url;a.download=fname;a.click();URL.revokeObjectURL(url);
+        window.open('https://wa.me/?text='+encodeURIComponent(caption+'\n\n📎 PDF downloaded — attach it in WhatsApp from your Downloads folder.'),'_blank');
+        toast('📄 PDF downloaded — attach it in WhatsApp')
+    }catch(err){
+        console.error(err);
+        toast('⚠️ Could not generate PDF — check network/CDN access');
+    }
+}
+function dXL(){const d=gD();let csv='ESTIMATE,'+d.eNo+(d.rev?' ('+d.rev+')':'')+'\n';if(d.site)csv+='PROJECT,'+d.site+'\n';csv+=['#','Product','Room/Area','Brand','Model','Qty','Beam Angle','Wattage','Lumens','Cutout','IP Rating','MRP/Sell','Sell Price','Disc/Markup','GST%','Final'].map(v=>`"${v}"`).join(',')+'\n';d.products.filter(p=>p.name).forEach((p,i)=>{const c=cP(p);csv+=[i+1,p.name,p.room||'',p.brand||'',p.model||'',p.qty,p.deg?p.deg+'°':'',p.watt?p.watt+'W':'',p.lumens?p.lumens+'lm':'',p.cutout||'',p.ip||'',c.isN?(c.nspMrp||''):(p.mrp||0),c.isN?c.sellU:'',p.disc||p.markup,p.gst||p.nspGst,c.fn.toFixed(2)].map(v=>`"${v}"`).join(',')+'\n'});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`${d.eNo||'est'}.csv`;a.click();toast('📊 Downloaded')}
+function dWD(){const el=document.getElementById('pvF');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff',`<html><head><meta charset="utf-8"><style>body{font-family:Arial;font-size:11px}table{width:100%;border-collapse:collapse}th{background:#E8F5E9;padding:5px;font-size:9px;border:1px solid #ddd}td{padding:5px;border:1px solid #eee;font-size:11px}</style></head><body>${el.innerHTML}</body></html>`],{type:'application/msword'}));a.download=`${gD().eNo||'est'}.doc`;a.click();toast('📝 Downloaded')}
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.getElementById('tB').appendChild(t);setTimeout(()=>t.remove(),3000)}
+
+// ===================== CLOUD SYNC (Google Sheets) =====================
+function sheetsHeaders(){return['ID','Estimate No','Date','Project/Site','Customer','Status','Revision','Grand Total','Currency','Updated At','Data JSON']}
+function setCloudUI(connected){document.getElementById('cloudDot').classList.toggle('on',!!connected)}
+async function apiFetch(url,opts){opts=opts||{};opts.headers=Object.assign({'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},opts.headers||{});const r=await fetch(url,opts);if(!r.ok){const t=await r.text();throw new Error('API '+r.status+': '+t)}if(r.status===204)return null;return r.json()}
+function ensureToken(){return new Promise((resolve,reject)=>{if(gToken&&gTokenExpiry>Date.now()+30000){resolve(gToken);return}if(!tokenClient){reject(new Error('Not connected — click Connect Google again'));return}
+    tokenClient.callback=(resp)=>{if(resp.error){reject(new Error('Token refresh failed: '+resp.error));return}gToken=resp.access_token;gTokenExpiry=Date.now()+(resp.expires_in*1000);resolve(gToken)};
+    try{tokenClient.requestAccessToken({prompt:''})}catch(err){reject(err)}})}
+function connectGoogle(){const cid=gv('gClientId');if(!cid){toast('⚠️ Enter Client ID first');return}localStorage.setItem(CIDK,cid);if(typeof google==='undefined'||!google.accounts){toast('⚠️ Google library not loaded — check network/ad-blockers');return}
+    tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.file',callback:async(resp)=>{
+        if(resp.error){toast('⚠️ Google sign-in failed');return}
+        gToken=resp.access_token;gTokenExpiry=Date.now()+(resp.expires_in*1000);
+        document.getElementById('gSyncStatus').textContent='✅ Connected';setCloudUI(true);
+        try{await ensureSheet();await syncNow()}catch(e){console.error(e);toast('⚠️ Connected, but sheet setup failed')}
+    }});
+    tokenClient.requestAccessToken({prompt:'consent'})}
+async function ensureSheet(){let sid=localStorage.getItem(SHEETIDK);
+    if(sid){gSheetId=sid;try{await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${sid}?fields=spreadsheetId`);document.getElementById('gSheetLink').innerHTML=`<a href="https://docs.google.com/spreadsheets/d/${sid}" target="_blank">Open Sheet ↗</a>`;return}catch(e){/* recreate below */}}
+    const created=await apiFetch('https://sheets.googleapis.com/v4/spreadsheets',{method:'POST',body:JSON.stringify({properties:{title:'MYHOMEBOTS Estimates'},sheets:[{properties:{title:'Estimates'}}]})});
+    gSheetId=created.spreadsheetId;localStorage.setItem(SHEETIDK,gSheetId);
+    await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${gSheetId}/values/Estimates!A1:K1?valueInputOption=RAW`,{method:'PUT',body:JSON.stringify({values:[sheetsHeaders()]})});
+    document.getElementById('gSheetLink').innerHTML=`<a href="https://docs.google.com/spreadsheets/d/${gSheetId}" target="_blank">Open Sheet ↗</a>`}
+async function readCloudRows(){await ensureToken();const res=await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${gSheetId}/values/Estimates!A2:K10000`);return res.values||[]}
+function rowToEstimate(row){try{const data=JSON.parse(row[10]||'{}');data.id=row[0];return data}catch(e){return null}}
+function stripImagesForCloud(e){
+    // Deep-clone and strip heavy base64 image data so the JSON fits Google Sheets' 50,000-char-per-cell limit.
+    // Images stay on the device that created them (in localStorage); only text/pricing data syncs to the cloud.
+    const c=JSON.parse(JSON.stringify(e));
+    if(c.co&&c.co.logo){c.co.logo=''}
+    if(c.sig&&c.sig.img){c.sig.img=''}
+    if(Array.isArray(c.products)){c.products.forEach(p=>{if(Array.isArray(p.photos)&&p.photos.length){p._photoCount=p.photos.length;p.photos=[]}})}
+    return c}
+function estimateToRow(e){let gt=0;(e.products||[]).forEach(p=>gt+=cP(p).fn);const cloudSafe=stripImagesForCloud(e);let json=JSON.stringify(cloudSafe);
+    if(json.length>49000){json=JSON.stringify({id:e.id,eNo:e.eNo,eDt:e.eDt,site:e.site,rev:e.rev,status:e.status,cu:e.cu,co:{n:e.co?.n,g:e.co?.g},total:e.total,cur:e.cur,at:e.at,_truncated:true,productCount:(e.products||[]).length})}
+    return[String(e.id),e.eNo||'',e.eDt||'',e.site||'',e.cu?.c||e.cu?.n||'',e.status||'Draft',e.rev||'',e.total||Math.round(gt)||0,e.cur||'₹',e.at||new Date().toISOString(),json]}
+async function pushOne(e){if(!gSheetId)return;await ensureToken();const rows=await readCloudRows();const idx=rows.findIndex(r=>r[0]===String(e.id));const rowVals=estimateToRow(e);
+    if(idx>=0){const rowNum=idx+2;await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${gSheetId}/values/Estimates!A${rowNum}:K${rowNum}?valueInputOption=RAW`,{method:'PUT',body:JSON.stringify({values:[rowVals]})})}
+    else{await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${gSheetId}/values/Estimates!A2:K2:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{method:'POST',body:JSON.stringify({values:[rowVals]})})}}
+function pushOneSafe(e){pushOne(e).catch(err=>{console.error('Cloud push failed',err);toast('⚠️ Cloud push failed: '+(err&&err.message?err.message:'unknown error'))})}
+async function deleteFromCloud(id){if(!gSheetId)return;try{await ensureToken();const rows=await readCloudRows();const idx=rows.findIndex(r=>r[0]===String(id));if(idx<0)return;
+    const meta=await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${gSheetId}?fields=sheets.properties`);const sp=meta.sheets.find(s=>s.properties.title==='Estimates').properties;
+    await apiFetch(`https://sheets.googleapis.com/v4/spreadsheets/${gSheetId}:batchUpdate`,{method:'POST',body:JSON.stringify({requests:[{deleteDimension:{range:{sheetId:sp.sheetId,dimension:'ROWS',startIndex:idx+1,endIndex:idx+2}}}]})})
+}catch(err){console.error('Cloud delete failed',err)}}
+async function syncNow(){if(!gSheetId){toast('⚠️ Connect Google first');return}toast('🔄 Syncing…');
+    try{await ensureToken();const rows=await readCloudRows();const cloudEstimates=rows.map(rowToEstimate).filter(Boolean);
+        const byId={};ests.forEach(e=>byId[String(e.id)]=e);const cloudById={};cloudEstimates.forEach(e=>cloudById[String(e.id)]=e);
+        cloudEstimates.forEach(ce=>{const le=byId[String(ce.id)];if(!le||new Date(ce.at)>new Date(le.at))byId[String(ce.id)]=ce});
+        let failCount=0,lastErr=null;
+        for(const le of Object.values(byId)){const ce=cloudById[String(le.id)];if(!ce||new Date(le.at)>new Date(ce.at)){try{await pushOne(le)}catch(err){failCount++;lastErr=err;console.error('Push failed for',le.id,err)}}}
+        ests=Object.values(byId).sort((a,b)=>new Date(a.at)-new Date(b.at));sAll();rnList();setCloudUI(true);
+        if(failCount>0){document.getElementById('gSyncStatus').textContent='⚠️ Synced with '+failCount+' error(s)';toast('⚠️ '+failCount+' item(s) failed to push: '+(lastErr&&lastErr.message?lastErr.message:'unknown error'))}
+        else{document.getElementById('gSyncStatus').textContent='✅ Synced '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});toast('✅ Synced')}
+    }catch(err){console.error(err);toast('⚠️ Sync failed: '+(err&&err.message?err.message:'try Connect again'));setCloudUI(false)}}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLB();if(e.key==='ArrowLeft')lbNav(-1);if(e.key==='ArrowRight')lbNav(1)});
+init();
+</script>
+</body>
+</html>
